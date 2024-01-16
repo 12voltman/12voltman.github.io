@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --theme: #1f3694;
+  --highlight: #69941f;
+  --text: #ffffff;
+  --background: #f2f2f2;
+}
+@font-face {
+  font-family: 'Montserrat';
+  src: url("Montserrat-Variable.ttf") format("truetype");
+}
+
+body {
+  margin: 0;
+  font-family: Montserrat, Helvetica, sans-serif;
+  font-weight: 500;
+}
+
+.topnav {
+  overflow: hidden;
+  background-color: var(--theme);
+}
+
+.topnav a {
+  float: left;
+  display: block;
+  color: var(--background);
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.topnav a:hover {
+  background-color: var(--theme);
+  color: var(--highlight);
+}
+
+.topnav a.active {
+  background-color: var(--highlight);
+  color: black;
+}
+
+.topnav .icon {
+  display: none;
+  height: 20px;
+  width: 20px;
+}
+
+@media screen and (max-width: 600px) {
+  .topnav a:not(:first-child) {display: none;}
+  .topnav a.icon {
+    float: right;
+    display: block;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .topnav.responsive {position: relative;}
+  .topnav.responsive .icon {
+    position: absolute;
+    display: inline;
+    right: 0;
+    top: 0;
+  }
+  .topnav.responsive a {
+    float: none;
+    display: block;
+    text-align: left;
+  }
+}
+</style>
+<link rel="icon" href="favicon.ico">
+<title>About</title>
+</head>
+<body>
+
+<div class="topnav" id="myTopnav">
+  <a href="index.html">Home</a>
+  <a href="services.html">Services</a>
+  <a href="cards.html">Cards</a>
+  <a href="portfolio.html">Portfolio</a>
+  <a href="about.html" class="active">About</a>
+  <a href="javascript:void(0);" class="icon" onclick="makeResponsive()">
+    <svg viewBox="0 0 448 512" fill="currentColor">
+      <path fill="currentColor" d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z">
+    </svg>
+  </a>
+</div>
+
+<div style="padding-left:16px">
+  <h1>About</h1>
+  <img src="headshot.jpg" alt="Professional headshot of Max Robinson">
+  <p>For the last decade I've been designing electronics and writing code.  Ever since then I've been working to find a place in this field, and I'm always looking for the next challenge.</p>
+  <p>As far as my background, I was brought up doing odd jobs for my dad's company and generally taking things apart to see how they work.  Apart from electronics, I also have experience with power generation (mainly gas fired turbines and combined cycle), electrical panel fabrication, welding, 3D modeling, 3D printing, scuba diving, rope access work at heights, event planning, sales, and physics tutoring. These are probably irrelevant to whyever you're here, but the more you know.  Again, please reach out if you have any kind of projects or work in mind, or even if you don't.</p>
+  <p>-Thanks, Max Robinson</p>
+  <br>
+  <br>
+  <a href="maxrobinson.vcf" download><button type="button" id="vcf">My .vcf</button></a>
+  
+</div>
+
+<script>
+
+(new URL(window.location.href)).searchParams.forEach((x, y) =>
+    document.getElementById(y).value = x)
+
+function makeResponsive() {
+  var x = document.getElementById("myTopnav");
+  if (x.className === "topnav") {
+    x.className += " responsive";
+  } else {
+    x.className = "topnav";
+  }
+}
+
+</script>
+
+</body>
+</html>
