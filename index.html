@@ -73,6 +73,14 @@ body {
     text-align: left;
   }
 }
+
+#uuid-field {
+  color: #d3d3d3;
+  font-family: monospace, monospace;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 10px;
+}
 </style>
 <link rel="icon" href="favicon.ico">
 <title>Max Robinson</title>
@@ -100,13 +108,14 @@ body {
   <a href="maxrobinson.vcf" download><button type="button" id="vcf">My .vcf</button></a>
   <a href="Resume-MaxRobinson2024-06-01.pdf" download><button type="button" id="resume">My resume (.pdf)</button></a>
   
-  
   <h2>If you have a card from me</h2>
   <p><form onsubmit="linkBoard(); return false;">
   <label for="board">Enter a board ID (if autofilled just continue):</label>
   <input id="board" name="board" type="text" autocomplete="off" spellcheck="false" placeholder=" " title="Board ID is the text in a box on the card you have" required>
   <button type="submit" id="goboard">Go to board page</button></form></p>
 </div>
+
+<div id="uuid-field"></div>
 
 <script>
 
@@ -126,6 +135,14 @@ function makeResponsive() {
     x.className = "topnav";
   }
 }
+
+window.onload = function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const uuid = urlParams.get('uuid');
+  if (uuid) {
+    document.getElementById('uuid-field').textContent = uuid;
+  }
+};
 
 </script>
 
