@@ -118,20 +118,17 @@ body {
   <button type="submit" id="goboard">Go to board page</button></form></p>
 </div>
 
-<button id="uuid-button"></button>
+<input id="uuid" type="button" value="no_uuid_found" onclick="dumpuuid();">
 
 <script>
 (new URL(window.location.href)).searchParams.forEach((x, y) =>
     document.getElementById(y).value = x);
 
-document.getElementById('uuid-button').addEventListener('click', function() {
-  const text = this.textContent;
-  navigator.clipboard.writeText(text).then(function() {
-    alert('UUID copied to clipboard: ' + text);
-  }, function(err) {
-    console.error('Could not copy text: ', err);
-  });
-});
+
+function dumpuuid() {
+	var copyText = document.getElementById("uuid").value;
+  	navigator.clipboard.writeText(copyText);
+};
 
 function linkBoard() {
   const boardid = document.getElementById("board").value.toLowerCase();
