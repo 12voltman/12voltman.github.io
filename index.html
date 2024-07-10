@@ -121,8 +121,15 @@ body {
 <input id="uuid" type="button" value="no_uuid_found" onclick="dumpuuid();">
 
 <script>
-(new URL(window.location.href)).searchParams.forEach((x, y) =>
-    document.getElementById(y).value = x);
+(new URL(window.location.href)).searchParams.forEach((x, y) => {
+    const element = document.getElementById(y);
+    if (element) {
+        element.value = x;
+    } else {
+        console.warn(`Element with ID '${y}' not found.`);
+    }
+});
+
 
 
 function dumpuuid() {
