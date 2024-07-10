@@ -74,12 +74,15 @@ body {
   }
 }
 
-#uuid-field {
+#uuid-button {
   color: #d3d3d3;
   font-family: monospace, monospace;
   text-transform: uppercase;
   text-align: center;
   padding: 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 </style>
 <link rel="icon" href="favicon.ico">
@@ -115,13 +118,21 @@ body {
   <button type="submit" id="goboard">Go to board page</button></form></p>
 </div>
 
-<div id="uuid-field"></div>
+<button id="uuid-button"></button>
 
 <script>
-
 (new URL(window.location.href)).searchParams.forEach((x, y) =>
-    document.getElementById(y).value = x)
-    
+    document.getElementById(y).value = x);
+
+document.getElementById('uuid-button').addEventListener('click', function() {
+  const text = this.textContent;
+  navigator.clipboard.writeText(text).then(function() {
+    alert('UUID copied to clipboard: ' + text);
+  }, function(err) {
+    console.error('Could not copy text: ', err);
+  });
+});
+
 function linkBoard() {
   const boardid = document.getElementById("board").value.toLowerCase();
   window.location.href = "example.com";
@@ -135,15 +146,6 @@ function makeResponsive() {
     x.className = "topnav";
   }
 }
-
-window.onload = function() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const uuid = urlParams.get('uuid');
-  if (uuid) {
-    document.getElementById('uuid-field').textContent = uuid;
-  }
-};
-
 </script>
 
 </body>
