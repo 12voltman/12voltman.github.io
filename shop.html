@@ -133,6 +133,48 @@
       display: block;
     }
 
+    .flip-button {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      border: none;
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(4px);
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .flip-button:focus-visible {
+      outline: 3px solid rgba(0,0,0,0.12);
+    }
+
+    .product-image-wrap[data-has-back="true"] .flip-button { display: inline-flex; }
+
+    .zoom-flip {
+      position: absolute;
+      top: 8px;
+      right: 56px;
+      border: none;
+      background: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .zoom-overlay.open .zoom-flip { display: inline-flex; }
+
     .product-body {
       padding: 14px;
       display: flex;
@@ -261,6 +303,7 @@
   <div id="zoomOverlay" class="zoom-overlay" aria-hidden="true">
     <div class="zoom-content">
       <button class="zoom-close" id="zoomClose" aria-label="Close image zoom">×</button>
+      <button class="zoom-flip" id="zoomFlip" aria-label="Show back">⇄</button>
       <img id="zoomImage" class="zoom-image" src="" alt="">
     </div>
   </div>
@@ -269,6 +312,7 @@
     <article class="product-card">
       <div class="product-image-wrap" tabindex="0" role="button" aria-label="Zoom product image">
         <img class="product-image" src="" alt="">
+        <button class="flip-button" type="button" aria-hidden="true" aria-label="Show back">⇄</button>
       </div>
       <div class="product-body">
         <h2 class="product-title"></h2>
@@ -279,19 +323,55 @@
   </template>
 
   <script>
-    async function loadCatalog() {
-      const response = await fetch('catalog.json', { cache: 'no-store' });
-      if (!response.ok) {
-        throw new Error(`Failed to load catalog.json (${response.status})`);
-      }
-      return response.json();
+    async function loadCSV(path) {
+      const res = await fetch(path, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Failed to load ${path} (${res.status})`);
+      const text = await res.text();
+      return parseCSV(text);
     }
 
-    function currency(amount, currencyCode = 'USD') {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: currencyCode
-      }).format(amount);
+    // Simple CSV parser that handles quoted fields and newlines
+    function parseCSV(text) {
+      const rows = [];
+      let row = [];
+      let field = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        const next = text[i + 1];
+        if (inQuotes) {
+          if (ch === '"') {
+            if (next === '"') { field += '"'; i++; }
+            else { inQuotes = false; }
+          } else {
+            field += ch;
+          }
+        } else {
+          if (ch === '"') { inQuotes = true; }
+          else if (ch === ',') { row.push(field); field = ''; }
+          else if (ch === '\r') { /* ignore */ }
+          else if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+          else { field += ch; }
+        }
+      }
+      // trailing field/row
+      if (inQuotes === false && (field !== '' || row.length)) { row.push(field); rows.push(row); }
+
+      if (rows.length === 0) return [];
+      const header = rows.shift().map(h => h.trim().toLowerCase());
+      return rows.map(r => {
+        const obj = {};
+        for (let i = 0; i < header.length; i++) {
+          obj[header[i]] = (r[i] || '').trim();
+        }
+        if (obj.price) obj.price = parseFloat(obj.price) || null;
+        return obj;
+      });
+    }
+
+    function currency(amount) {
+      if (amount == null || isNaN(amount)) return '';
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
 
     function renderCatalog(items) {
@@ -303,21 +383,29 @@
         const node = template.content.cloneNode(true);
         const imageWrap = node.querySelector('.product-image-wrap');
         const image = node.querySelector('.product-image');
+        const flipButton = node.querySelector('.flip-button');
         const title = node.querySelector('.product-title');
         const price = node.querySelector('.product-price');
         const buy = node.querySelector('.buy-button');
 
-        image.src = item.image;
-        image.alt = item.title;
-        title.textContent = item.title;
-        price.textContent = item.price != null
-          ? currency(item.price, item.currency || 'USD')
-          : '';
-        buy.href = item.buy_url;
-        buy.textContent = 'Buy';
-        buy.setAttribute('aria-label', `Buy ${item.title}`);
+        const front = item.frontpath || '';
+        const back = item.backpath || '';
 
-        const openZoom = () => showZoom(item.image, item.title);
+        image.src = front;
+        image.alt = item.title || '';
+        image.dataset.front = front;
+        if (back) image.dataset.back = back;
+        image.dataset.showingBack = 'false';
+
+        if (back) imageWrap.setAttribute('data-has-back', 'true');
+
+        title.textContent = item.title || '';
+        price.textContent = item.price != null ? currency(item.price) : '';
+        buy.href = item.url || '#';
+        buy.textContent = 'Buy';
+        buy.setAttribute('aria-label', `Buy ${item.title || ''}`);
+
+        const openZoom = () => showZoomFromImage(image);
         imageWrap.addEventListener('click', openZoom);
         imageWrap.addEventListener('keydown', (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
@@ -326,18 +414,70 @@
           }
         });
 
+        flipButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFlip(image, flipButton);
+        });
+
         grid.appendChild(node);
       }
     }
 
-    function showZoom(src, alt) {
+    function toggleFlip(image, flipButton) {
+      const showingBack = image.dataset.showingBack === 'true';
+      if (showingBack) {
+        image.src = image.dataset.front || '';
+        image.dataset.showingBack = 'false';
+        flipButton.setAttribute('aria-label', 'Show back');
+      } else {
+        if (!image.dataset.back) return;
+        image.src = image.dataset.back;
+        image.dataset.showingBack = 'true';
+        flipButton.setAttribute('aria-label', 'Show front');
+      }
+    }
+
+    function showZoomFromImage(image) {
       const overlay = document.getElementById('zoomOverlay');
-      const image = document.getElementById('zoomImage');
-      image.src = src;
-      image.alt = alt;
+      const zoomImg = document.getElementById('zoomImage');
+      const zoomFlip = document.getElementById('zoomFlip');
+
+      zoomImg.src = image.src || '';
+      zoomImg.alt = image.alt || '';
+      // carry over front/back data for toggling in zoom
+      zoomImg.dataset.front = image.dataset.front || '';
+      zoomImg.dataset.back = image.dataset.back || '';
+      zoomImg.dataset.showingBack = image.dataset.showingBack || 'false';
+
+      if (zoomImg.dataset.back) {
+        zoomFlip.style.display = 'inline-flex';
+        zoomFlip.setAttribute('aria-hidden', 'false');
+        zoomFlip.onclick = (e) => {
+          e.stopPropagation();
+          toggleZoomFlip(zoomImg);
+        };
+      } else {
+        zoomFlip.style.display = 'none';
+        zoomFlip.onclick = null;
+      }
+
       overlay.classList.add('open');
       overlay.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+    }
+
+    function toggleZoomFlip(zoomImg) {
+      const showingBack = zoomImg.dataset.showingBack === 'true';
+      if (showingBack) {
+        zoomImg.src = zoomImg.dataset.front || '';
+        zoomImg.dataset.showingBack = 'false';
+        document.getElementById('zoomFlip').setAttribute('aria-label', 'Show back');
+      } else {
+        if (!zoomImg.dataset.back) return;
+        zoomImg.src = zoomImg.dataset.back;
+        zoomImg.dataset.showingBack = 'true';
+        document.getElementById('zoomFlip').setAttribute('aria-label', 'Show front');
+      }
     }
 
     function hideZoom() {
@@ -347,6 +487,9 @@
       overlay.setAttribute('aria-hidden', 'true');
       image.src = '';
       image.alt = '';
+      image.dataset.front = '';
+      image.dataset.back = '';
+      document.getElementById('zoomFlip').style.display = 'none';
       document.body.style.overflow = '';
     }
 
@@ -360,25 +503,21 @@
     }
 
     document.getElementById('zoomOverlay').addEventListener('click', (event) => {
-      if (event.target.id === 'zoomOverlay') {
-        hideZoom();
-      }
+      if (event.target.id === 'zoomOverlay') hideZoom();
     });
 
     document.getElementById('zoomClose').addEventListener('click', hideZoom);
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        hideZoom();
-      }
+      if (event.key === 'Escape') hideZoom();
     });
 
-    loadCatalog()
+    // load CSV catalog and render
+    loadCSV('shop/catalog.csv')
       .then(renderCatalog)
       .catch((error) => {
         console.error(error);
-        document.getElementById('store-grid').innerHTML =
-          '<p>Could not load catalog.</p>';
+        document.getElementById('store-grid').innerHTML = '<p>Could not load catalog.</p>';
       });
   </script>
 </body>
