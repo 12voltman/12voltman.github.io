@@ -1,6 +1,5 @@
 [
   {
-    "slug": "as-shocked-as-you-are",
     "title": "I’m as shocked as you are",
     "price": 28.0,
     "currency": "USD",
@@ -8,7 +7,6 @@
     "buy_url": "https://buy.stripe.com/REPLACE_ME_1"
   },
   {
-    "slug": "weapons-grade-insecurity",
     "title": "Weapons grade insecurity",
     "price": 28.0,
     "currency": "USD",
