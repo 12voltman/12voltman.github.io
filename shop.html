@@ -358,8 +358,11 @@
       if (inQuotes === false && (field !== '' || row.length)) { row.push(field); rows.push(row); }
 
       if (rows.length === 0) return [];
-      const header = rows.shift().map(h => h.trim().toLowerCase());
-      return rows.map(r => {
+      // drop completely-empty rows (e.g. trailing newline or blank lines)
+      const filteredRows = rows.filter(r => r.some(cell => String(cell).trim() !== ''));
+      if (filteredRows.length === 0) return [];
+      const header = filteredRows.shift().map(h => h.trim().toLowerCase());
+      return filteredRows.map(r => {
         const obj = {};
         for (let i = 0; i < header.length; i++) {
           obj[header[i]] = (r[i] || '').trim();
