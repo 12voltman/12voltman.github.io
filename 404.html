@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>404 — Not found</title>
+  <style>
+    :root{--theme:#1f3694;--highlight:#69941f;--background:#f2f2f2;--text:#111;--card-bg:#fff;--border:#d9d9d9;--shadow:0 8px 24px rgba(0,0,0,0.12)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,Helvetica,Arial,sans-serif;background:var(--background);color:var(--text);font-weight:500}
+    .topnav{overflow:hidden;background-color:var(--theme);position:sticky;top:0;z-index:50}
+    .topnav a{float:left;display:block;color:var(--background);text-align:center;padding:14px 16px;text-decoration:none;font-size:17px}
+    .topnav a:hover{color:var(--highlight)}
+    .topnav .icon{display:none}
+    .page{max-width:1200px;margin:0 auto;padding:40px 20px}
+
+    .error-grid{display:flex;align-items:center;gap:32px}
+    .error-text h1{font-size:6.5rem;margin:0;line-height:1}
+    .error-text p{font-size:1.125rem;margin:12px 0 20px}
+    .error-image{width:33%;max-width:520px;border-radius:8px;box-shadow:var(--shadow)}
+
+    .btn{display:inline-block;background:var(--theme);color:var(--background);padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700}
+
+    @media (max-width:800px){
+      .error-grid{flex-direction:column;text-align:center}
+      .error-image{width:66%}
+      .error-text h1{font-size:4.5rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="topnav" id="myTopnav">
+    <a href="index.html">Home</a>
+    <a href="services.html">Services</a>
+    <a href="cards.html">Cards</a>
+    <a href="portfolio.html">Portfolio</a>
+    <a href="about.html">About</a>
+    <a href="shop.html">Shop</a>
+    <a href="javascript:void(0);" class="icon" onclick="(function(x){x.className=(x.className==='topnav'?x.className+' responsive':'topnav')})(document.getElementById('myTopnav'))">
+      <svg viewBox="0 0 448 512" fill="currentColor" style="height:20px;width:20px"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"></path></svg>
+    </a>
+  </div>
+
+  <main class="page">
+    <section class="intro">
+      <div class="error-grid">
+        <div class="error-text">
+          <h1>404</h1>
+          <p>Sorry — the page you requested cannot be found.</p>
+          <a class="btn" href="index.html">Return to Home</a>
+        </div>
+        <img src="404.jpg" alt="404 illustration" class="error-image">
+      </div>
+    </section>
+  </main>
+</body>
+</html>
