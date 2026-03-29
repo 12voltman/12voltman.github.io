@@ -377,6 +377,14 @@
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
 
+    function sortCatalogByDateDesc(items) {
+      return items.slice().sort((a, b) => {
+        const aTime = Date.parse(a.date) || 0;
+        const bTime = Date.parse(b.date) || 0;
+        return bTime - aTime;
+      });
+    }
+
     function renderCatalog(items) {
       const grid = document.getElementById('store-grid');
       const template = document.getElementById('productTemplate');
@@ -515,8 +523,9 @@
       if (event.key === 'Escape') hideZoom();
     });
 
-    // load CSV catalog and render
+    // load CSV catalog, sort newest items first, and render
     loadCSV('shop/catalog.csv')
+      .then(sortCatalogByDateDesc)
       .then(renderCatalog)
       .catch((error) => {
         console.error(error);
