@@ -100,6 +100,102 @@
       margin-bottom: 8px;
     }
 
+    .shop-layout {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .filter-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .filter-panel h2,
+    .filter-panel h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
+    .filter-note {
+      margin: 0 0 14px;
+      color: #4b4b4b;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .tag-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .tag-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tag-item.selected {
+      background: rgba(31, 54, 148, 0.08);
+      border-color: var(--theme);
+    }
+
+    .tag-item input {
+      accent-color: var(--theme);
+      cursor: pointer;
+    }
+
+    .clear-button {
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font: inherit;
+      font-weight: 700;
+      background: var(--highlight);
+      color: black;
+      cursor: pointer;
+    }
+
+    .clear-button:hover,
+    .clear-button:focus-visible {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      outline: none;
+    }
+
+    .results-count {
+      margin: 0 0 18px;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    .store-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media screen and (max-width: 980px) {
+      .shop-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .store-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -297,7 +393,22 @@
       <p>Click any design to zoom. Buy buttons go straight to Stripe checkout.</p>
     </section>
 
-    <section id="store-grid" class="store-grid" aria-label="Product catalog"></section>
+    <div class="shop-layout">
+      <aside class="filter-panel" aria-label="Product filters">
+        <h2>Filters</h2>
+        <p id="adultNotice" class="filter-note"></p>
+        <div class="tag-filter-group">
+          <h3>Tags</h3>
+          <div id="tagList" class="tag-list"></div>
+        </div>
+        <button id="clearTags" class="clear-button" type="button">Clear tags</button>
+      </aside>
+
+      <div class="store-column">
+        <p id="resultsCount" class="results-count" aria-live="polite"></p>
+        <section id="store-grid" class="store-grid" aria-label="Product catalog"></section>
+      </div>
+    </div>
   </main>
 
   <div id="zoomOverlay" class="zoom-overlay" aria-hidden="true">
@@ -368,13 +479,34 @@
           obj[header[i]] = (r[i] || '').trim();
         }
         if (obj.price) obj.price = parseFloat(obj.price) || null;
-        return obj;
+      obj.adult = /^(true|1|yes|y)$/i.test(String(obj.adult || '').trim());
+      obj.tags = normalizeTags(obj.tags);
+      return obj;
       });
     }
 
     function currency(amount) {
       if (amount == null || isNaN(amount)) return '';
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const showAdultItems = urlParams.get('adult') === 'true';
+    const selectedTags = new Set();
+
+    function normalizeTags(value) {
+      const result = [];
+      const seen = new Set();
+      const rawTags = String(value || '').split(/[,;]+/);
+      for (const tag of rawTags) {
+        const clean = tag.trim();
+        if (!clean) continue;
+        const key = clean.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push(clean);
+      }
+      return result;
     }
 
     function sortCatalogByDateDesc(items) {
@@ -384,6 +516,97 @@
         return bTime - aTime;
       });
     }
+
+    function isItemVisible(item) {
+      if (item.adult && !showAdultItems) return false;
+      if (selectedTags.size === 0) return true;
+      const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
+      return [...selectedTags].every((tag) => itemTags.includes(tag));
+    }
+
+    function filterCatalog(items) {
+      return items.filter(isItemVisible);
+    }
+
+    function getAvailableTagOptions(items) {
+      const tags = [];
+      const seen = new Set();
+      for (const item of items) {
+        if (item.adult && !showAdultItems) continue;
+        for (const tag of item.tags || []) {
+          const key = tag.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          tags.push(tag);
+        }
+      }
+      return tags.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    }
+
+    function updateFilters(items) {
+      const availableTags = getAvailableTagOptions(items);
+      renderAdultNotice(items);
+      renderTagList(availableTags);
+      renderResultsCount(items);
+      renderCatalog(filterCatalog(items));
+    }
+
+    function renderResultsCount(items) {
+      const visible = filterCatalog(items).length;
+      const total = items.length;
+      const countNode = document.getElementById('resultsCount');
+      countNode.textContent = `${visible} of ${total} listings visible`;
+    }
+
+    function renderAdultNotice(items) {
+      const notice = document.getElementById('adultNotice');
+      const adultCount = items.filter((item) => item.adult).length;
+      if (adultCount === 0) {
+        notice.textContent = '';
+        return;
+      }
+      if (showAdultItems) {
+        notice.textContent = `Adult listings are visible because ?adult=true is present. (${adultCount} adult listing${adultCount === 1 ? '' : 's'})`;
+      } else {
+        notice.textContent = `Adult listings are hidden. Add ?adult=true to view ${adultCount} adult listing${adultCount === 1 ? '' : 's'}.`;
+      }
+    }
+
+    function renderTagList(tags) {
+      const tagList = document.getElementById('tagList');
+      tagList.innerHTML = '';
+      for (const tag of tags) {
+        const lowerTag = tag.toLowerCase();
+        const label = document.createElement('label');
+        label.className = `tag-item${selectedTags.has(lowerTag) ? ' selected' : ''}`;
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = lowerTag;
+        input.checked = selectedTags.has(lowerTag);
+        input.addEventListener('change', (event) => {
+          if (event.target.checked) selectedTags.add(lowerTag);
+          else selectedTags.delete(lowerTag);
+          updateFilters(catalogItems);
+        });
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(tag));
+        label.addEventListener('click', (event) => {
+          if (event.target === input) return;
+          input.checked = !input.checked;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        tagList.appendChild(label);
+      }
+    }
+
+    function clearTagSelection() {
+      selectedTags.clear();
+      updateFilters(catalogItems);
+    }
+
+    document.getElementById('clearTags').addEventListener('click', clearTagSelection);
+
+    let catalogItems = [];
 
     function renderCatalog(items) {
       const grid = document.getElementById('store-grid');
@@ -523,10 +746,13 @@
       if (event.key === 'Escape') hideZoom();
     });
 
-    // load CSV catalog, sort newest items first, and render
+    // load CSV catalog, sort newest items first, and render with filters
     loadCSV('shop/catalog.csv')
-      .then(sortCatalogByDateDesc)
-      .then(renderCatalog)
+      .then((items) => {
+        catalogItems = sortCatalogByDateDesc(items);
+        renderAdultNotice(catalogItems);
+        updateFilters(catalogItems);
+      })
       .catch((error) => {
         console.error(error);
         document.getElementById('store-grid').innerHTML = '<p>Could not load catalog.</p>';
