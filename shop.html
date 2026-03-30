@@ -497,7 +497,7 @@
     function normalizeTags(value) {
       const result = [];
       const seen = new Set();
-      const rawTags = String(value || '').split(/[,;]+/);
+      const rawTags = String(value || '').split(/\|+/);
       for (const tag of rawTags) {
         const clean = tag.trim();
         if (!clean) continue;
@@ -553,23 +553,23 @@
 
     function renderResultsCount(items) {
       const visible = filterCatalog(items).length;
-      const total = items.length;
+      const total = showAdultItems ? items.length : items.filter((item) => !item.adult).length;
       const countNode = document.getElementById('resultsCount');
       countNode.textContent = `${visible} of ${total} listings visible`;
     }
 
     function renderAdultNotice(items) {
       const notice = document.getElementById('adultNotice');
+      if (!showAdultItems) {
+        notice.textContent = '';
+        return;
+      }
       const adultCount = items.filter((item) => item.adult).length;
       if (adultCount === 0) {
         notice.textContent = '';
         return;
       }
-      if (showAdultItems) {
-        notice.textContent = `Adult listings are visible because ?adult=true is present. (${adultCount} adult listing${adultCount === 1 ? '' : 's'})`;
-      } else {
-        notice.textContent = `Adult listings are hidden. Add ?adult=true to view ${adultCount} adult listing${adultCount === 1 ? '' : 's'}.`;
-      }
+      notice.textContent = `Adult listings are visible because ?adult=true is present. (${adultCount} adult listing${adultCount === 1 ? '' : 's'})`;
     }
 
     function renderTagList(tags) {
