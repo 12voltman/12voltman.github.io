@@ -494,6 +494,13 @@
     const showAdultItems = urlParams.get('adult') === 'true';
     const selectedTags = new Set();
 
+    // Parse URL parameters for preselected tags
+    const tagsParam = urlParams.get('tags') || urlParams.get('tag');
+    if (tagsParam) {
+      const tags = tagsParam.split('|').map(t => t.trim().toLowerCase());
+      tags.forEach(t => selectedTags.add(t));
+    }
+
     function normalizeTags(value) {
       const result = [];
       const seen = new Set();
