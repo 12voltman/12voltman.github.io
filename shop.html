@@ -528,7 +528,10 @@
       if (item.adult && !showAdultItems) return false;
       if (selectedTags.size === 0) return true;
       const itemTags = (item.tags || []).map((tag) => tag.toLowerCase());
-      return [...selectedTags].every((tag) => itemTags.includes(tag));
+      return [...selectedTags].every((tag) => {
+        if (tag === 'adult') return item.adult;
+        return itemTags.includes(tag);
+      });
     }
 
     function filterCatalog(items) {
@@ -546,6 +549,9 @@
           seen.add(key);
           tags.push(tag);
         }
+      }
+      if (showAdultItems && !seen.has('adult')) {
+        tags.push('Adult');
       }
       return tags.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     }
